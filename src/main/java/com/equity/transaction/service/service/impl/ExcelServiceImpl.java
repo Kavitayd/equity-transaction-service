@@ -211,7 +211,7 @@ public class ExcelServiceImpl implements ExcelService {
             String str = cell.getStringCellValue().trim();
             return str.isEmpty() ? null : Integer.parseInt(str);
         } else if (cell.getCellType() == CellType.FORMULA) {
-            return (int) cell.getNumericCellValue();  // fallback for formulas
+            return (int) cell.getNumericCellValue();
         }
         return null;
     }
