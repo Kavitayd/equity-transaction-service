@@ -1,11 +1,14 @@
 package com.equity.transaction.service.service.impl;
+import com.equity.transaction.service.model.MarketPriceDTO;
+import com.equity.transaction.service.model.PositionDTO;
+import com.equity.transaction.service.repository.MarketPriceRepository;
+import com.equity.transaction.service.repository.PositionRepository;
 import com.equity.transaction.service.repository.TransactionRepository;
 import com.equity.transaction.service.model.TransactionDTO;
 import com.equity.transaction.service.service.ExcelService;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.pulsar.PulsarProperties;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -22,6 +25,18 @@ public class ExcelServiceImpl implements ExcelService {
 
     @Autowired
     private TransactionRepository transactionRepository;
+    @Autowired
+    private MarketPriceRepository marketPriceRepository;
+    @Autowired
+    private PositionRepository positionRepository;
+
+    private boolean isHeaderRow(Row row) {
+        Cell firstCell = row.getCell(0);
+        if (firstCell == null) return false;
+        if (firstCell.getCellType() != CellType.STRING) return false;
+        String value = firstCell.getStringCellValue().trim().toLowerCase();
+        return value.equals("client code");
+    }
 
     @Override
     public List<TransactionDTO> readTransactionSheet(MultipartFile file) {
@@ -36,8 +51,8 @@ public class ExcelServiceImpl implements ExcelService {
             while (rows.hasNext()) {
                 Row row = rows.next();
 
-                if (row.getRowNum() == 1) {
-                    continue; // skip header row
+                if (row.getRowNum() == 0 || isHeaderRow(row)) {
+                    continue;
                 }
 
                 TransactionDTO dto = new TransactionDTO();
@@ -70,11 +85,11 @@ public class ExcelServiceImpl implements ExcelService {
     public List<TransactionDTO> getAllTransactions() {
         List<TransactionDTO> transactionEntities = transactionRepository.findAll();
         return transactionEntities.stream()
-                .map(this::convertToDto)
+                .map(this::convertTransactionsToDto)
                 .collect(Collectors.toList());
     }
 
-    private TransactionDTO convertToDto(TransactionDTO entity) {
+    private TransactionDTO convertTransactionsToDto(TransactionDTO entity) {
         TransactionDTO dto = new TransactionDTO();
         dto.setClientCode(entity.getClientCode());
         dto.setClientName(entity.getClientName());
@@ -92,6 +107,97 @@ public class ExcelServiceImpl implements ExcelService {
         dto.setGST(entity.getGST());
         return dto;
     }
+
+    @Override
+    public List<PositionDTO> readPositionSheet(MultipartFile file) {
+        List<PositionDTO> positions = new ArrayList<>();
+        try (InputStream inputStream = file.getInputStream();
+             Workbook workbook = new XSSFWorkbook(inputStream)) {
+
+            Sheet sheet = workbook.getSheetAt(1); // Sheet 1: Positions
+            for (Row row : sheet) {
+                if (row.getRowNum() == 0 || isHeaderRow(row)) continue;
+
+                PositionDTO dto = new PositionDTO();
+                dto.setClientCode(getLongValue(row.getCell(0)));
+                dto.setDate(getDateValue(row.getCell(1)));
+                dto.setSecurityCode(getStringValue(row.getCell(2)));
+                dto.setQty(getIntegerValue(row.getCell(3)));
+                dto.setHoldingCost(getDoubleValue(row.getCell(4)));
+                dto.setAverageCostPerUnit(getDoubleValue(row.getCell(5)));
+                dto.setCorpActionQty(getIntegerValue(row.getCell(6)));
+                dto.setMarketPricePerUnitOnToday(getDoubleValue(row.getCell(7)));
+                dto.setMarketValueOnToday(getDoubleValue(row.getCell(8)));
+                dto.setCumulativeUnrealisedGainLossUptoToday(getDoubleValue(row.getCell(9)));
+                positions.add(dto);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to read Positions sheet", e);
+        }
+        return positions;
+    }
+
+    @Override
+    public List<PositionDTO> getAllPositions() {
+        List<PositionDTO> positionEntities = positionRepository.findAll();
+        return positionEntities.stream()
+                .map(this::convertPositionsToDto)
+                .collect(Collectors.toList());
+    }
+    private PositionDTO convertPositionsToDto(PositionDTO entity) {
+        PositionDTO dto = new PositionDTO();
+        dto.setClientCode(entity.getClientCode());
+        dto.setDate(entity.getDate());
+        dto.setSecurityCode(entity.getSecurityCode());
+        dto.setQty(entity.getQty());
+        dto.setHoldingCost(entity.getHoldingCost());
+        dto.setAverageCostPerUnit(entity.getAverageCostPerUnit());
+        dto.setCorpActionQty(entity.getCorpActionQty());
+        dto.setMarketPricePerUnitOnToday(entity.getMarketPricePerUnitOnToday());
+        dto.setMarketValueOnToday(entity.getMarketValueOnToday());
+        dto.setCumulativeUnrealisedGainLossUptoToday(entity.getCumulativeUnrealisedGainLossUptoToday());
+        return dto;
+    }
+
+    @Override
+    public List<MarketPriceDTO> readMarketPriceSheet(MultipartFile file) {
+        List<MarketPriceDTO> prices = new ArrayList<>();
+        try (InputStream inputStream = file.getInputStream();
+             Workbook workbook = new XSSFWorkbook(inputStream)) {
+
+            Sheet sheet = workbook.getSheetAt(2); // Sheet 2: Market Prices
+            for (Row row : sheet) {
+                if (row.getRowNum() == 0 || isHeaderRow(row)) continue;
+
+                MarketPriceDTO dto = new MarketPriceDTO();
+                dto.setSecurityCode(getStringValue(row.getCell(0)));
+                dto.setDate(getDateValue(row.getCell(1)));
+                dto.setPrice(getDoubleValue(row.getCell(2)));
+                prices.add(dto);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to read Market Price sheet", e);
+        }
+        return prices;
+    }
+    @Override
+    public List<MarketPriceDTO> getAllMarketPrices() {
+        List<MarketPriceDTO> marketEntities = marketPriceRepository.findAll();
+        return marketEntities.stream()
+                .map(this::convertMarketPriceToDto)
+                .collect(Collectors.toList());
+    }
+
+    private MarketPriceDTO convertMarketPriceToDto(MarketPriceDTO entity) {
+        MarketPriceDTO dto = new MarketPriceDTO();
+        dto.setSecurityCode(entity.getSecurityCode());
+        dto.setDate(entity.getDate());
+        dto.setPrice(entity.getPrice());
+        return dto;
+
+    }
+
+
 
     private String getStringValue(Cell cell) {
         return cell != null ? cell.getStringCellValue() : null;

@@ -12,19 +12,12 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Document(collection = "PositionMaster")
-public class PositionDTO {
+@Document(collection = "MarketPriceMaster")
+public class MarketPriceDTO {
     @Id
     private String id = UUID.randomUUID().toString();
 
-    private Long clientCode;
-    private LocalDate date;
     private String securityCode;
-    private Integer qty;
-    private Double holdingCost;
-    private Double averageCostPerUnit;
-    private Integer corpActionQty;
-    private Double marketPricePerUnitOnToday;
-    private Double marketValueOnToday;
-    private Double cumulativeUnrealisedGainLossUptoToday;
+    private LocalDate date;
+    private Double price;
 }
