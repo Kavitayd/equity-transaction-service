@@ -23,12 +23,20 @@ public class TransactionDTO {
     private LocalDate settlementDate;
     private String securityCode;
     private Integer quantity;
-    private Double rate;
+    private Integer rate;
     private Integer stampDuty;
-    private Integer sttBrokerage;
+    private Integer stt;
+    private Integer brokerage;
     private Integer transactionCharges;
     private Integer turnoverFees;
     private Integer clearingCharges;
     private Integer GST;
-}
+    private Integer amount;
+    private String transactionNrd;
+    private String PrdFlag;
+    private String gainLoss;
+    private Integer availableSaleQuantity;
+    private Integer availableBuyQuantity;
+    private String transactionId;
 
+}
