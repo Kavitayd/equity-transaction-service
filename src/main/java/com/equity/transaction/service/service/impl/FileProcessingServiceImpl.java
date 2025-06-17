@@ -1,30 +1,33 @@
 package com.equity.transaction.service.service.impl;
 import com.equity.transaction.service.repository.TransactionRepository;
 import com.equity.transaction.service.model.TransactionDTO;
-import com.equity.transaction.service.service.ExcelService;
+import com.equity.transaction.service.service.FileProcessingService;
+import com.opencsv.bean.ColumnPositionMappingStrategy;
+import com.opencsv.bean.CsvToBean;
+import com.opencsv.bean.CsvToBeanBuilder;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.pulsar.PulsarProperties;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 @Service
-public class ExcelServiceImpl implements ExcelService {
+public class FileProcessingServiceImpl implements FileProcessingService {
 
     @Autowired
     private TransactionRepository transactionRepository;
 
     @Override
-    public List<TransactionDTO> readTransactionSheet(MultipartFile file) {
+    public List<TransactionDTO> readTransactionFromExcel(MultipartFile file) {
         List<TransactionDTO> transactions = new ArrayList<>();
 
         try (InputStream inputStream = file.getInputStream();
@@ -36,7 +39,7 @@ public class ExcelServiceImpl implements ExcelService {
             while (rows.hasNext()) {
                 Row row = rows.next();
 
-                if (row.getRowNum() == 1) {
+                if (row.getRowNum() == 0) {
                     continue; // skip header row
                 }
 
@@ -64,6 +67,29 @@ public class ExcelServiceImpl implements ExcelService {
         }
 
         return transactions;
+    }
+
+
+    @Override
+    public List<TransactionDTO> readTransactionFromCsv(MultipartFile file) {
+        try (Reader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
+            ColumnPositionMappingStrategy<TransactionDTO> strategy = new ColumnPositionMappingStrategy<>();
+            strategy.setType(TransactionDTO.class);
+            String[] columns = new String[]{"clientCode", "clientName", "eventType", "tradeDate", "settlementDate",
+                    "securityCode", "quantity", "rate", "stampDuty", "sttBrokerage", "transactionCharges",
+                    "turnoverFees", "clearingCharges", "GST"};
+            strategy.setColumnMapping(columns);
+
+            CsvToBean<TransactionDTO> csvToBean = new CsvToBeanBuilder<TransactionDTO>(reader)
+                    .withType(TransactionDTO.class)
+                    .withMappingStrategy(strategy)
+                    .withIgnoreLeadingWhiteSpace(true)
+                    .build();
+
+            return csvToBean.parse();
+        } catch (IOException e) {
+            throw new RuntimeException("Error parsing CSV: " + e.getMessage(), e);
+        }
     }
 
     @Override
@@ -122,14 +148,31 @@ public class ExcelServiceImpl implements ExcelService {
         }
         return null;
     }
+    private LocalDate getDateValue(Cell cell) {
+        if (cell == null) return null;
+
+        if (cell.getCellType() == CellType.NUMERIC && DateUtil.isCellDateFormatted(cell)) {
+            return cell.getLocalDateTimeCellValue().toLocalDate();
+        } else if (cell.getCellType() == CellType.STRING) {
+            String dateStr = cell.getStringCellValue().trim();
+            if (dateStr.isEmpty()) return null;
+            try {
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MMM-yy", Locale.ENGLISH);
+                return LocalDate.parse(dateStr, formatter);
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to parse date string: " + dateStr, e);
+            }
+        }
+        return null;
+    }
 
     private Double getDoubleValue(Cell cell) {
         return cell != null ? cell.getNumericCellValue() : null;
     }
 
-    private LocalDate getDateValue(Cell cell) {
-        return cell != null && DateUtil.isCellDateFormatted(cell)
-                ? cell.getLocalDateTimeCellValue().toLocalDate()
-                : null;
-    }
+//    private LocalDate getDateValue(Cell cell) {
+//        return cell != null && DateUtil.isCellDateFormatted(cell)
+//                ? cell.getLocalDateTimeCellValue().toLocalDate()
+//                : null;
+//    }
 }

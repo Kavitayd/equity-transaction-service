@@ -1,7 +1,7 @@
 package com.equity.transaction.service.controller;
 
 import com.equity.transaction.service.model.TransactionDTO;
-import com.equity.transaction.service.service.ExcelService;
+import com.equity.transaction.service.service.FileProcessingService;
 import com.equity.transaction.service.service.MongoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -16,24 +16,53 @@ import java.util.List;
 public class EquityTransactionController {
 
     @Autowired
-    private ExcelService excelService;
+    private FileProcessingService fileProcessingService;
+
     @Autowired
     private MongoService mongoService;
 
     @PostMapping("/upload")
     public ResponseEntity<String> uploadData(@RequestParam("file") MultipartFile file) {
         try {
-            List<TransactionDTO> transactions = excelService.readTransactionSheet(file);
+            String filename = file.getOriginalFilename();
+            if (filename == null) return ResponseEntity.badRequest().body("Missing file name");
+
+            List<TransactionDTO> transactions;
+
+            if (filename.endsWith(".xlsx")) {
+                transactions = fileProcessingService.readTransactionFromExcel(file);
+            } else if (filename.endsWith(".csv")) {
+                transactions = fileProcessingService.readTransactionFromCsv(file);
+            } else {
+                return ResponseEntity.badRequest().body("Unsupported file type");
+            }
+
             mongoService.saveTransactions(transactions);
             return ResponseEntity.ok("Transactions uploaded successfully.");
-
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Upload failed: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Upload failed: " + e.getMessage());
         }
     }
+
     @GetMapping
     public ResponseEntity<List<TransactionDTO>> getAllTransactions() {
-        List<TransactionDTO> transactions = excelService.getAllTransactions();
-        return ResponseEntity.ok(transactions);
+        return ResponseEntity.ok(fileProcessingService.getAllTransactions());
     }
+//    @PostMapping("/upload")
+//    public ResponseEntity<String> uploadData(@RequestParam("file") MultipartFile file) {
+//        try {
+//            List<TransactionDTO> transactions = fileProcessingService.readTransactionFromCsv(file);
+//            mongoService.saveTransactions(transactions);
+//            return ResponseEntity.ok("Transactions uploaded successfully.");
+//
+//        } catch (Exception e) {
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Upload failed: " + e.getMessage());
+//        }
+//    }
+//    @GetMapping
+//    public ResponseEntity<List<TransactionDTO>> getAllTransactions() {
+//        List<TransactionDTO> transactions = fileProcessingService.getAllTransactions();
+//        return ResponseEntity.ok(transactions);
+//    }
 }

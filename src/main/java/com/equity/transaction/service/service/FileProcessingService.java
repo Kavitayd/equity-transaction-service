@@ -7,8 +7,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 @Service
-public interface ExcelService {
-    List<TransactionDTO> readTransactionSheet(MultipartFile file);
+public interface FileProcessingService {
+    List<TransactionDTO> readTransactionFromExcel(MultipartFile file);
+    List<TransactionDTO> readTransactionFromCsv(MultipartFile file);
     List<TransactionDTO> getAllTransactions();
 }
-
