@@ -41,6 +41,7 @@ public class ExcelServiceImpl implements ExcelService {
     @Override
     public List<TransactionDTO> readTransactionSheet(MultipartFile file) {
         List<TransactionDTO> transactions = new ArrayList<>();
+        int serialNumber = 1;
 
         try (InputStream inputStream = file.getInputStream();
              Workbook workbook = new XSSFWorkbook(inputStream)) {
@@ -56,20 +57,66 @@ public class ExcelServiceImpl implements ExcelService {
                 }
 
                 TransactionDTO dto = new TransactionDTO();
-                dto.setClientCode(getLongValue(row.getCell(0)));
+                Long clientCode = getLongValue(row.getCell(0));
+                String securityCode = getStringValue(row.getCell(5));
+                LocalDate tradeDate = getDateValue(row.getCell(3));
+
+                Integer quantity = getIntegerValue(row.getCell(6));
+                Integer rate = getIntegerValue(row.getCell(7));
+//                Integer amount = (quantity != null && rate != null) ? (int) Math.round(quantity * rate) : null;
+                Integer amount = (quantity != null && rate != null) ? quantity * rate : null;
+
+                String prdFlag = getStringValue(row.getCell(17));
+
+                String transactionNrd = getStringValue(row.getCell(16));
+
+                int rowNum = row.getRowNum() + 1;
+
+                if (transactionNrd == null || transactionNrd.isEmpty()) {
+                    System.out.println("⚠️ Warning: Row " + rowNum + ": Transaction NRD is required but missing.");
+                    continue;
+                }
+
+                if (prdFlag == null || prdFlag.isEmpty()) {
+                    System.out.println("⚠️ Warning: Row " + rowNum + ": PRD Flag is required but missing.");
+                    continue;
+                }
+                Integer saleQtyFromExcel = getIntegerValue(row.getCell(19));
+                Integer buyQtyFromExcel = getIntegerValue(row.getCell(20));
+                // Warning if manual entry differs from derived logic
+                if (saleQtyFromExcel != null && !saleQtyFromExcel.equals(quantity)) {
+                    System.out.printf("Warning: Row %d - Available Sale Quantity (%d) does not match Quantity (%d)%n", row.getRowNum(), saleQtyFromExcel, quantity);
+                }
+
+                if (buyQtyFromExcel != null && !buyQtyFromExcel.equals(quantity)) {
+                    System.out.printf("Warning: Row %d - Available Buy Quantity (%d) does not match Quantity (%d)%n", row.getRowNum(), buyQtyFromExcel, quantity);
+                }
+
+                dto.setClientCode(clientCode);
                 dto.setClientName(getStringValue(row.getCell(1)));
                 dto.setEventType(getStringValue(row.getCell(2)));
-                dto.setTradeDate(getDateValue(row.getCell(3)));
+                dto.setTradeDate(tradeDate);
                 dto.setSettlementDate(getDateValue(row.getCell(4)));
-                dto.setSecurityCode(getStringValue(row.getCell(5)));
-                dto.setQuantity(getIntegerValue(row.getCell(6)));
-                dto.setRate(getDoubleValue(row.getCell(7)));
+                dto.setSecurityCode(securityCode);
+                dto.setQuantity(quantity);
+                dto.setRate(rate);
                 dto.setStampDuty(getIntegerValue(row.getCell(8)));
-                dto.setSttBrokerage(getIntegerValue(row.getCell(9)));
-                dto.setTransactionCharges(getIntegerValue(row.getCell(10)));
-                dto.setTurnoverFees(getIntegerValue(row.getCell(11)));
-                dto.setClearingCharges(getIntegerValue(row.getCell(12)));
-                dto.setGST(getIntegerValue(row.getCell(13)));
+                dto.setStt(getIntegerValue(row.getCell(9)));
+                dto.setBrokerage(getIntegerValue(row.getCell(10)));
+                dto.setTransactionCharges(getIntegerValue(row.getCell(11)));
+                dto.setTurnoverFees(getIntegerValue(row.getCell(12)));
+                dto.setClearingCharges(getIntegerValue(row.getCell(13)));
+                dto.setGST(getIntegerValue(row.getCell(14)));
+                dto.setAmount(amount);
+                dto.setTransactionNrd(transactionNrd);
+                dto.setPrdFlag(prdFlag);
+                dto.setGainLoss(getStringValue(row.getCell(18)));
+                dto.setAvailableSaleQuantity(quantity != null ? quantity : 0);
+                dto.setAvailableBuyQuantity(quantity != null ? quantity : 0);
+                dto.setTransactionId(getStringValue(row.getCell(21)));
+
+                String transactionId = clientCode + "_" + securityCode + "_" + tradeDate + "_" + serialNumber++;
+                dto.setTransactionId(transactionId);
 
                 transactions.add(dto);
             }
@@ -100,11 +147,19 @@ public class ExcelServiceImpl implements ExcelService {
         dto.setQuantity(entity.getQuantity());
         dto.setRate(entity.getRate());
         dto.setStampDuty(entity.getStampDuty());
-        dto.setSttBrokerage(entity.getSttBrokerage());
+        dto.setStt(entity.getStt());
+        dto.setBrokerage(entity.getBrokerage());
         dto.setTransactionCharges(entity.getTransactionCharges());
         dto.setTurnoverFees(entity.getTurnoverFees());
         dto.setClearingCharges(entity.getClearingCharges());
         dto.setGST(entity.getGST());
+        dto.setAmount(entity.getAmount());
+        dto.setTransactionNrd(entity.getTransactionNrd());
+        dto.setPrdFlag(entity.getPrdFlag());
+        dto.setGainLoss(entity.getGainLoss());
+        dto.setAvailableSaleQuantity(entity.getAvailableSaleQuantity());
+        dto.setAvailableBuyQuantity(entity.getAvailableBuyQuantity());
+        dto.setTransactionId(entity.getTransactionId());
         return dto;
     }
 
@@ -199,8 +254,30 @@ public class ExcelServiceImpl implements ExcelService {
 
 
 
-    private String getStringValue(Cell cell) {
-        return cell != null ? cell.getStringCellValue() : null;
+    public String getStringValue(Cell cell) {
+        if (cell == null) return null;
+
+        switch (cell.getCellType()) {
+            case STRING:
+                return cell.getStringCellValue().trim();
+            case NUMERIC:
+                // Convert numeric to string, remove decimal if it's a whole number
+                double numericValue = cell.getNumericCellValue();
+                if (numericValue == Math.floor(numericValue)) {
+                    // It's an integer
+                    return String.valueOf((long) numericValue);
+                } else {
+                    return String.valueOf(numericValue);
+                }
+            case BOOLEAN:
+                return String.valueOf(cell.getBooleanCellValue());
+            case FORMULA:
+                return cell.getCellFormula(); // or evaluate it
+            case BLANK:
+                return "";
+            default:
+                return cell.toString(); // fallback
+        }
     }
 
     private Integer getIntegerValue(Cell cell) {
