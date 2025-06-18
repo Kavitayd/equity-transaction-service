@@ -11,10 +11,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/transactions")
 public class EquityTransactionController {
+    private static final Logger logger = LoggerFactory.getLogger(EquityTransactionController.class);
 
     @Autowired
     private ExcelService excelService;
@@ -22,6 +25,8 @@ public class EquityTransactionController {
     @Autowired
     private MongoService mongoService;
 
+
+    //End point upload and process an Excel files contain three sheets of data
     @PostMapping("/upload")
     public ResponseEntity<String> uploadData(@RequestParam("file") MultipartFile file) {
         try {
@@ -31,12 +36,15 @@ public class EquityTransactionController {
             List<MarketPriceDTO> marketPrices = excelService.readMarketPriceSheet(file);    // Sheet 2
 
             // Save them to MongoDB
+            //Clear old transaction data and save new transaction to the MongoDb
             mongoService.deleteAllTransactions();
             mongoService.saveTransactions(transactions);
 
+            //Clear old position data and save new position to MongoDb
             mongoService.deleteAllPositions();
             mongoService.savePositions(positions);
 
+            //Clear old Market data and save new Market Price to the MongoDB
             mongoService.deleteAllMarketPrices();
             mongoService.saveMarketPrices(marketPrices);
 
@@ -48,21 +56,45 @@ public class EquityTransactionController {
         }
     }
 
+
+    //Endpoint to get all transaction records from MongoDB
+
+    // Endpoint to get all the transaction records from MongoDB
     @GetMapping
     public ResponseEntity<List<TransactionDTO>> getAllTransactions() {
-        List<TransactionDTO> transactions = excelService.getAllTransactions();
-        return ResponseEntity.ok(transactions);
+        try {
+            List<TransactionDTO> transactions = excelService.getAllTransactions();
+            return ResponseEntity.ok(transactions);
+        } catch (Exception e) {
+            logger.error("Error while fetching transaction from MongoDB",e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(null); // Or you can use ResponseEntity.internalServerError().build();
+        }
     }
 
+    // Endpoint to get all the position records from MongoDB
     @GetMapping("/positions")
     public ResponseEntity<List<PositionDTO>> getAllPositions() {
-        List<PositionDTO> positions = excelService.getAllPositions();
-        return ResponseEntity.ok(positions);
+        try {
+            List<PositionDTO> positions = excelService.getAllPositions();
+            return ResponseEntity.ok(positions);
+        } catch (Exception e) {
+            logger.error("Error while fetching from MongoDB",e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(null);
+        }
     }
 
+    // Endpoint to get all the market price records from MongoDB
     @GetMapping("/market_price")
     public ResponseEntity<List<MarketPriceDTO>> getAllMarketPrices() {
-        List<MarketPriceDTO> marketPrices = excelService.getAllMarketPrices();
-        return ResponseEntity.ok(marketPrices);
+        try {
+            List<MarketPriceDTO> marketPrices = excelService.getAllMarketPrices();
+            return ResponseEntity.ok(marketPrices);
+        } catch (Exception e) {
+            logger.error("Error while fetching market price from MondoDB",e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(null);
+        }
     }
 }
