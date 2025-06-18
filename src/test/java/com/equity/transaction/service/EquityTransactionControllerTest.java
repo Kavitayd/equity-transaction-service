@@ -14,7 +14,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SuppressWarnings("removal")
+@SuppressWarnings("removal") // Suppress @MockBean deprecation warning for Spring Boot 3.5+
 @WebMvcTest(controllers = EquityTransactionController.class)
 public class EquityTransactionControllerTest {
 
@@ -36,6 +36,7 @@ public class EquityTransactionControllerTest {
                 "dummy content".getBytes()
         );
 
+        // 🔥 Use the correct endpoint from your controller
         mockMvc.perform(multipart("/transactions/upload")
                         .file(mockFile))
                 .andExpect(status().isOk());
