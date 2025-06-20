@@ -10,6 +10,8 @@ public interface MongoService {
     void saveTransactions(List<TransactionDTO> transactions);
     void deleteAllTransactions();
 
+    List<TransactionDTO> getAllTransactions();
+
     void savePositions(List<PositionDTO> positions);
     void deleteAllPositions();
 

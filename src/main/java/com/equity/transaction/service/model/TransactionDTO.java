@@ -7,6 +7,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDate;
+import java.util.Date;
 import java.util.UUID;
 
 @Document(collection = "TransactionMaster")
@@ -20,7 +21,7 @@ public class TransactionDTO {
     private String clientName;
     private String eventType;
     private LocalDate tradeDate;
-    private LocalDate settlementDate;
+    private Date settlementDate;
     private String securityCode;
     private Integer quantity;
     private Integer rate;
@@ -38,5 +39,5 @@ public class TransactionDTO {
     private Integer availableSaleQuantity;
     private Integer availableBuyQuantity;
     private String transactionId;
-
+//    private Double  gainOrLoss;
 }

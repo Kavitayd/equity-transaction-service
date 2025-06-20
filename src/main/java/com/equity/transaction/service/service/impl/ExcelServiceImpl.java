@@ -11,6 +11,8 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import com.equity.transaction.service.service.util.ServiceUtil;
+
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,6 +21,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static com.equity.transaction.service.service.util.ServiceUtil.*;
 
 @Service
 public class ExcelServiceImpl implements ExcelService {
@@ -31,8 +35,9 @@ public class ExcelServiceImpl implements ExcelService {
     private PositionRepository positionRepository;
 
     /**
-     * Heler method to check if the given row is header row.
+     * Helper method to check if the given row is header row.
      * It assumes the first column (index 0) contains the string "Client code" in the header row.
+     *
      * @param row The Excel row to be checked
      * @return true if the row is a header row, false otherwise
      */
@@ -48,6 +53,7 @@ public class ExcelServiceImpl implements ExcelService {
     /**
      * Reads the first sheet (Sheet0) from the uplode Excel file and maps each row to a transactionDTO object.
      * Skips the header row and assign a serial no to help generate unique transaction IDs
+     *
      * @param file Multipart file uploaded via API (Excel format expected)
      * @return List of TransactionDTO objects populated from the Excel sheet
      */
@@ -73,18 +79,18 @@ public class ExcelServiceImpl implements ExcelService {
                 TransactionDTO dto = new TransactionDTO();
                 Long clientCode = getLongValue(row.getCell(0));
                 String securityCode = getStringValue(row.getCell(5));
-                LocalDate tradeDate = getDateValue(row.getCell(3));
+                LocalDate tradeDateLocal = getDateValue(row.getCell(3));
+                java.sql.Date tradeDate = tradeDateLocal != null ? java.sql.Date.valueOf(tradeDateLocal) : null;
+
+                LocalDate settlementDateLocal = getDateValue(row.getCell(4));
+                java.sql.Date settlementDate = settlementDateLocal != null ? java.sql.Date.valueOf(settlementDateLocal) : null;
 
                 Integer quantity = getIntegerValue(row.getCell(6));
                 Integer rate = getIntegerValue(row.getCell(7));
-
-//                Integer amount = (quantity != null && rate != null) ? (int) Math.round(quantity * rate) : null;
                 Integer amount = (quantity != null && rate != null) ? quantity * rate : null;
 
                 String prdFlag = getStringValue(row.getCell(17));
-
                 String transactionNrd = getStringValue(row.getCell(16));
-
                 int rowNum = row.getRowNum() + 1;
 
                 //Validate: Transaction NRD must be present
@@ -115,8 +121,8 @@ public class ExcelServiceImpl implements ExcelService {
                 dto.setClientCode(clientCode);
                 dto.setClientName(getStringValue(row.getCell(1)));
                 dto.setEventType(getStringValue(row.getCell(2)));
-                dto.setTradeDate(tradeDate);
-                dto.setSettlementDate(getDateValue(row.getCell(4)));
+                //dto.setTradeDate(tradeDate);
+                //dto.setSettlementDate(getDateValue(row.getCell(4)));
                 dto.setSecurityCode(securityCode);
                 dto.setQuantity(quantity);
                 dto.setRate(rate);
@@ -195,6 +201,7 @@ public class ExcelServiceImpl implements ExcelService {
     /**
      * Read the second sheet (sheet1 ) from the uploded Excel file,
      * parses each row into a PositionDTO object,and returns the list.
+     *
      * @param file Excel file uploaded via the API (expected to contain Positions data in Sheet 1)
      * @return List of PositionDTO objects populated from the Excel sheet
      */
@@ -222,7 +229,7 @@ public class ExcelServiceImpl implements ExcelService {
                 dto.setMarketValueOnToday(getDoubleValue(row.getCell(8)));
                 dto.setCumulativeUnrealisedGainLossUptoToday(getDoubleValue(row.getCell(9)));
 
-               //Add the populated DTO to the list
+                //Add the populated DTO to the list
                 positions.add(dto);
             }
         } catch (IOException e) {
@@ -299,6 +306,7 @@ public class ExcelServiceImpl implements ExcelService {
         }
         return prices;
     }
+
     @Override
     public List<MarketPriceDTO> getAllMarketPrices() {
         List<MarketPriceDTO> marketEntities = marketPriceRepository.findAll();
@@ -314,69 +322,5 @@ public class ExcelServiceImpl implements ExcelService {
         dto.setPrice(entity.getPrice());
         return dto;
 
-    }
-
-
-
-    public String getStringValue(Cell cell) {
-        if (cell == null) return null;
-
-        switch (cell.getCellType()) {
-            case STRING:
-                return cell.getStringCellValue().trim();
-            case NUMERIC:
-                // Convert numeric to string, remove decimal if it's a whole number
-                double numericValue = cell.getNumericCellValue();
-                if (numericValue == Math.floor(numericValue)) {
-                    // It's an integer
-                    return String.valueOf((long) numericValue);
-                } else {
-                    return String.valueOf(numericValue);
-                }
-            case BOOLEAN:
-                return String.valueOf(cell.getBooleanCellValue());
-            case FORMULA:
-                return cell.getCellFormula(); // or evaluate it
-            case BLANK:
-                return "";
-            default:
-                return cell.toString(); // fallback
-        }
-    }
-
-    private Integer getIntegerValue(Cell cell) {
-        if (cell == null) return null;
-        if (cell.getCellType() == CellType.NUMERIC) {
-            return (int) cell.getNumericCellValue();
-        } else if (cell.getCellType() == CellType.STRING) {
-            String str = cell.getStringCellValue().trim();
-            return str.isEmpty() ? null : Integer.parseInt(str);
-        } else if (cell.getCellType() == CellType.FORMULA) {
-            return (int) cell.getNumericCellValue();
-        }
-        return null;
-    }
-
-    private Long getLongValue(Cell cell) {
-        if (cell == null) return null;
-        if (cell.getCellType() == CellType.NUMERIC) {
-            return (long) cell.getNumericCellValue();
-        } else if (cell.getCellType() == CellType.STRING) {
-            String str = cell.getStringCellValue().trim();
-            return str.isEmpty() ? null : Long.parseLong(str);
-        } else if (cell.getCellType() == CellType.FORMULA) {
-            return (long) cell.getNumericCellValue();
-        }
-        return null;
-    }
-
-    private Double getDoubleValue(Cell cell) {
-        return cell != null ? cell.getNumericCellValue() : null;
-    }
-
-    private LocalDate getDateValue(Cell cell) {
-        return cell != null && DateUtil.isCellDateFormatted(cell)
-                ? cell.getLocalDateTimeCellValue().toLocalDate()
-                : null;
     }
 }

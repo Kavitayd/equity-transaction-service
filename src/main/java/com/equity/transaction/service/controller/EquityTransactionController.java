@@ -1,9 +1,12 @@
 package com.equity.transaction.service.controller;
 
+import com.equity.transaction.service.model.CapitalGainDTO;
 import com.equity.transaction.service.model.MarketPriceDTO;
 import com.equity.transaction.service.model.PositionDTO;
 import com.equity.transaction.service.model.TransactionDTO;
+//import com.equity.transaction.service.service.EquityComputationService;
 import com.equity.transaction.service.service.ExcelService;
+import com.equity.transaction.service.service.CapitalGainService;
 import com.equity.transaction.service.service.MongoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -25,6 +28,8 @@ public class EquityTransactionController {
     @Autowired
     private MongoService mongoService;
 
+    @Autowired
+    private CapitalGainService capitalGainService;
 
     //End point upload and process an Excel files contain three sheets of data
     @PostMapping("/upload")
@@ -44,7 +49,7 @@ public class EquityTransactionController {
             mongoService.deleteAllPositions();
             mongoService.savePositions(positions);
 
-            //Clear old Market data and save new Market Price to the MongoDB
+
             mongoService.deleteAllMarketPrices();
             mongoService.saveMarketPrices(marketPrices);
 
@@ -55,9 +60,11 @@ public class EquityTransactionController {
                     .body("Upload failed: " + e.getMessage());
         }
     }
-
-
-    //Endpoint to get all transaction records from MongoDB
+    @GetMapping("/fifo")
+    public ResponseEntity<List<CapitalGainDTO>> computeFifoCapitalGains() {
+        List<CapitalGainDTO> gains = capitalGainService.computeCapitalGainsUsingFIFO();
+        return ResponseEntity.ok(gains);
+    }
 
     // Endpoint to get all the transaction records from MongoDB
     @GetMapping
@@ -98,3 +105,12 @@ public class EquityTransactionController {
         }
     }
 }
+
+//    @Autowired
+//    private EquityComputationService equityComputationService;
+
+//    @PostMapping("/compute-fifo-gain-loss")
+//    public ResponseEntity<String> computeFifo() {
+//        equityComputationService.computeGainLossFIFO();
+//        return ResponseEntity.ok("FIFO Gain/Loss Computation Completed");
+//    }

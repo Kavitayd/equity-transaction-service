@@ -29,10 +29,14 @@ public class MongoServiceImpl implements MongoService {
         System.out.println("Saved " + transactions.size() + " transactions to MongoDB");
 
     }
-
     @Override
     public void deleteAllTransactions() {
         transactionRepository.deleteAll();
+    }
+
+    @Override
+    public List<TransactionDTO> getAllTransactions() {
+        return transactionRepository.findAll();
     }
 
     @Override
