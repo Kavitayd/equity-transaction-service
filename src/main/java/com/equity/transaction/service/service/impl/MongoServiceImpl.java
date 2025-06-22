@@ -1,6 +1,8 @@
 package com.equity.transaction.service.service.impl;
 
 import com.equity.transaction.service.model.TransactionDTO;
+import com.equity.transaction.service.model.PositionDTO;
+import com.equity.transaction.service.model.MarketPriceDTO;
 import com.equity.transaction.service.repository.MarketPriceRepository;
 import com.equity.transaction.service.repository.PositionRepository;
 import com.equity.transaction.service.repository.TransactionRepository;
