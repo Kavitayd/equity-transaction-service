@@ -16,6 +16,7 @@ import java.util.UUID;
 public class PositionDTO {
     @Id
     private String id = UUID.randomUUID().toString();
+
     private Long clientCode;
     private LocalDate date;
     private String securityCode;

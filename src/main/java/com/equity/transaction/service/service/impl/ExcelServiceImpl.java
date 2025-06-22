@@ -167,11 +167,11 @@ public class ExcelServiceImpl implements ExcelService {
 
         //Converts each entity to its corresponding DTO using a mapping method (convertTransactionToDTO)
         return transactionEntities.stream()
-                .map(this::convertTransactionsToDto)
+                .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
-    private TransactionDTO convertTransactionsToDto(TransactionDTO entity) {
+    private TransactionDTO convertToDto(TransactionDTO entity) {
         TransactionDTO dto = new TransactionDTO();
         dto.setClientCode(entity.getClientCode());
         dto.setClientName(entity.getClientName());
