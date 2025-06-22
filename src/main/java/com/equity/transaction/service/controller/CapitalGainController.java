@@ -26,4 +26,15 @@ public class CapitalGainController {
         Map<String, List<String>> grouped = capitalGainService.getTransactionIdsGroupedByEventType();
         return ResponseEntity.ok(grouped);
     }
+    @GetMapping("/detailed")
+    public ResponseEntity<List<CapitalGainDTO>> getDetailedCapitalGains() {
+        List<CapitalGainDTO> gains = capitalGainService.computeCapitalGainsUsingFIFO();
+        return ResponseEntity.ok(gains);
+    }
+    @GetMapping("/compute-fifo")
+    public ResponseEntity<List<CapitalGainDTO>> computeCapitalGainsUsingFIFO() {
+        List<CapitalGainDTO> results = capitalGainService.computeCapitalGainsUsingFIFO();
+        return ResponseEntity.ok(results);
+    }
+
 }

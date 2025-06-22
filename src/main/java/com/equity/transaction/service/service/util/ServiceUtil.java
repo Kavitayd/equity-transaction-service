@@ -31,36 +31,92 @@ public class ServiceUtil {
                 return cell.toString();
         }
     }
-
     public static Integer getIntegerValue(Cell cell) {
         if (cell == null) return null;
-        if (cell.getCellType() == CellType.NUMERIC) {
-            return (int) cell.getNumericCellValue();
-        } else if (cell.getCellType() == CellType.STRING) {
-            String str = cell.getStringCellValue().trim();
-            return str.isEmpty() ? null : Integer.parseInt(str);
-        } else if (cell.getCellType() == CellType.FORMULA) {
-            return (int) cell.getNumericCellValue();
+
+        try {
+            switch (cell.getCellType()) {
+                case NUMERIC:
+                    return (int) cell.getNumericCellValue();
+                case STRING:
+                    String str = cell.getStringCellValue().trim();
+                    if (str.matches("\\d+")) {
+                        return Integer.parseInt(str);
+                    } else {
+                        throw new NumberFormatException("Cell contains non-numeric string: " + str);
+                    }
+                case FORMULA:
+                    return (int) cell.getNumericCellValue();
+                case BLANK:
+                    return null;
+                default:
+                    throw new NumberFormatException("Unsupported cell type: " + cell.getCellType());
+            }
+        } catch (Exception e) {
+            throw new NumberFormatException("Failed to parse cell to Integer: " + e.getMessage());
         }
-        return null;
     }
+
+
+//    public static Integer getIntegerValue(Cell cell) {
+//        if (cell == null) return null;
+//        if (cell.getCellType() == CellType.NUMERIC) {
+//            return (int) cell.getNumericCellValue();
+//        } else if (cell.getCellType() == CellType.STRING) {
+//            String str = cell.getStringCellValue().trim();
+//            return str.isEmpty() ? null : Integer.parseInt(str);
+//        } else if (cell.getCellType() == CellType.FORMULA) {
+//            return (int) cell.getNumericCellValue();
+//        }
+//        return null;
+//    }
 
     public static Long getLongValue(Cell cell) {
         if (cell == null) return null;
-        if (cell.getCellType() == CellType.NUMERIC) {
-            return (long) cell.getNumericCellValue();
-        } else if (cell.getCellType() == CellType.STRING) {
-            String str = cell.getStringCellValue().trim();
-            return str.isEmpty() ? null : Long.parseLong(str);
-        } else if (cell.getCellType() == CellType.FORMULA) {
-            return (long) cell.getNumericCellValue();
+
+        try {
+            switch (cell.getCellType()) {
+                case NUMERIC:
+                    return (long) cell.getNumericCellValue();
+                case STRING:
+                    String str = cell.getStringCellValue().trim();
+                    if (str.matches("\\d+")) {
+                        return Long.parseLong(str);
+                    } else {
+                        throw new NumberFormatException("Cell contains non-numeric string: " + str);
+                    }
+                case FORMULA:
+                    return (long) cell.getNumericCellValue();  // assume result is numeric
+                case BLANK:
+                    return null;
+                default:
+                    throw new NumberFormatException("Unsupported cell type: " + cell.getCellType());
+            }
+        } catch (Exception e) {
+            throw new NumberFormatException("Failed to parse cell to Long: " + e.getMessage());
         }
-        return null;
     }
 
     public static Double getDoubleValue(Cell cell) {
-        return cell != null ? cell.getNumericCellValue() : null;
+        if (cell == null) return null;
+
+        try {
+            if (cell.getCellType() == CellType.NUMERIC) {
+                return cell.getNumericCellValue();
+            } else if (cell.getCellType() == CellType.STRING) {
+                String str = cell.getStringCellValue().trim();
+                return str.isEmpty() ? null : Double.parseDouble(str);
+            } else if (cell.getCellType() == CellType.FORMULA) {
+                return cell.getNumericCellValue();
+            }
+        } catch (NumberFormatException | IllegalStateException e) {
+            System.out.println("⚠️ Skipping cell (expected Double): " + e.getMessage());
+            return null;
+        }
+
+        return null;
     }
+
 
     public static LocalDate getDateValue(Cell cell) {
         return cell != null && DateUtil.isCellDateFormatted(cell)

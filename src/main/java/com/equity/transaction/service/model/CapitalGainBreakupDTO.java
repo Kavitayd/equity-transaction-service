@@ -15,21 +15,21 @@ public class CapitalGainBreakupDTO {
 
     private Long clientCode;
     private String securityCode;
-
     private Date purchaseDate;
     private Date saleDate;
+    private Double purchaseRate;
+    private Double saleRate;
+    private Integer holdingPeriodDays;
+    private String capitalGainType;
+    private Double quantity;
     private int holdingPeriod;
-
     private Double purchasePrice;
     private Double salePrice;
-
     private Double purchaseValue;
     private Double saleValue;
     private Double gainOrLoss;
-
     private String purchaseTransactionId;
     private String saleTransactionId;
-
     private Integer balancePurchaseQty;
     private Integer balanceSaleQty;
 

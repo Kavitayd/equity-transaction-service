@@ -19,15 +19,13 @@ public class CapitalGainDTO {
     private String securityCode;
     private Date saleDate;
     private Double totalCapitalGain;
-
     private String prdHoldingFlag;
     private String clientName;
     private String securityName;
     private String isin;
     private String listingStatus;
     private String capitalGainType;
-    private List<CapitalGainBreakupDTO> breakups;
+    private String transactionId;
+    private List<CapitalGainBreakupDTO> breakup;
 
-    public void setBreakup(ArrayList<Object> objects) {
-    }
 }

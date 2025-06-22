@@ -79,6 +79,15 @@ public class EquityTransactionController {
                     .body(null); // Or you can use ResponseEntity.internalServerError().build();
         }
     }
+    @GetMapping("/ping")
+    public ResponseEntity<String> pingMongo() {
+        try {
+            mongoService.getAllTransactions(); // just a fetch
+            return ResponseEntity.ok(" MongoDB is reachable!");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(" MongoDB connection failed: " + e.getMessage());
+        }
+    }
 
     // Endpoint to get all the position records from MongoDB
     @GetMapping("/positions")

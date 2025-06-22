@@ -20,11 +20,9 @@ public class TransactionDTO {
     private Long clientCode;
     private String clientName;
     private String eventType;
-    private LocalDate tradeDate;
+    private Date tradeDate;
     private Date settlementDate;
     private String securityCode;
-    private Integer quantity;
-    private Integer rate;
     private Integer stampDuty;
     private Integer stt;
     private Integer brokerage;
@@ -32,12 +30,14 @@ public class TransactionDTO {
     private Integer turnoverFees;
     private Integer clearingCharges;
     private Integer GST;
-    private Integer amount;
     private String transactionNrd;
     private String PrdFlag;
     private String gainLoss;
-    private Integer availableSaleQuantity;
-    private Integer availableBuyQuantity;
     private String transactionId;
+    private Double availableBuyQuantity;
+    private Double availableSaleQuantity;
+    private Double quantity;
+    private Double rate;
+    private Double amount;
 //    private Double  gainOrLoss;
 }
