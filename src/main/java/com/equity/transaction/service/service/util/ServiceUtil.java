@@ -3,6 +3,9 @@ package com.equity.transaction.service.service.util;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.DateUtil;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import static com.equity.transaction.service.service.util.ServiceUtil.roundToTwoDecimalPlaces;
 
 import java.time.LocalDate;
 
@@ -123,4 +126,11 @@ public class ServiceUtil {
                 ? cell.getLocalDateTimeCellValue().toLocalDate()
                 : null;
     }
+
+    public static double roundToTwoDecimalPlaces(double value) {
+        return BigDecimal.valueOf(value)
+                .setScale(2, RoundingMode.HALF_UP)
+                .doubleValue();
+    }
+
 }

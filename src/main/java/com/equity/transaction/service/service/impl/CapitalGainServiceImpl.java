@@ -9,6 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.equity.transaction.service.service.MongoService;
 import java.time.ZoneId;
+import static com.equity.transaction.service.service.util.ServiceUtil.roundToTwoDecimalPlaces;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -78,14 +82,29 @@ public class CapitalGainServiceImpl implements CapitalGainService {
                 breakup.setQuantity(matchedQty);
                 breakup.setGainOrLoss(gain);
                 breakup.setHoldingPeriodDays((int) holdingDays);
+                //new added
                 breakup.setCapitalGainType(gainType);
+                breakup.setPurchasePrice(purchase.getRate() * matchedQty);
+                breakup.setSalePrice(sale.getRate() * matchedQty);
+                breakup.setPurchaseValue(purchase.getRate() * matchedQty);
+                breakup.setSaleValue(sale.getRate() * matchedQty);
+
+
+//                breakupList.add(breakup);
+//                totalCapitalGain += gain;
+                //New Added
+                purchase.setAvailableBuyQuantity(purchase.getAvailableBuyQuantity() - matchedQty);
+                saleQtyRemaining -= matchedQty;
+
+                breakup.setBalancePurchaseQty(purchase.getAvailableBuyQuantity());
+                breakup.setBalanceSaleQty(saleQtyRemaining);
 
                 breakupList.add(breakup);
                 totalCapitalGain += gain;
 
                 // Reduce available quantity
-                purchase.setAvailableBuyQuantity(purchase.getAvailableBuyQuantity() - matchedQty);
-                saleQtyRemaining -= matchedQty;
+//                purchase.setAvailableBuyQuantity(purchase.getAvailableBuyQuantity() - matchedQty);
+//                saleQtyRemaining -= matchedQty;
 
                 if (saleQtyRemaining <= 0) break;
             }

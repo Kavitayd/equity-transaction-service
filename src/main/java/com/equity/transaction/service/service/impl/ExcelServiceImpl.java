@@ -70,12 +70,14 @@ public class ExcelServiceImpl implements ExcelService {
 
                     String securityCode = getStringValue(row.getCell(5));
                     Integer quantity = getIntegerValue(row.getCell(6));
-                    Integer rate = getIntegerValue(row.getCell(7));
-                    Integer amount = (quantity != null && rate != null) ? quantity * rate : null;
+                    Double rate = getDoubleValue(row.getCell(7));
+                    Double amount = (quantity != null && rate != null) ? quantity * rate : null;
 
                     dto.setSecurityCode(securityCode);
                     dto.setQuantity(quantity != null ? quantity.doubleValue() : null);
-                    dto.setRate(rate != null ? rate.doubleValue() : null);
+                    //changing
+                    //dto.setRate(rate != null ? rate.doubleValue() : null);
+                    dto.setRate(rate);
                     dto.setStampDuty(getIntegerValue(row.getCell(8)));
                     dto.setStt(getIntegerValue(row.getCell(9)));
                     dto.setBrokerage(getIntegerValue(row.getCell(10)));
@@ -83,8 +85,9 @@ public class ExcelServiceImpl implements ExcelService {
                     dto.setTurnoverFees(getIntegerValue(row.getCell(12)));
                     dto.setClearingCharges(getIntegerValue(row.getCell(13)));
                     dto.setGST(getIntegerValue(row.getCell(14)));
-                    dto.setAmount(amount != null ? amount.doubleValue() : null);
-
+                    //change
+                    //dto.setAmount(amount != null ? amount.doubleValue() : null);
+                    dto.setAmount(amount);
                     String transactionNrd = getStringValue(row.getCell(16));
                     String prdFlag = getStringValue(row.getCell(17));
                     dto.setTransactionNrd(transactionNrd);
