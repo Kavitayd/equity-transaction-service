@@ -75,17 +75,42 @@ public class CapitalGainServiceImpl implements CapitalGainService {
                 CapitalGainBreakupDTO breakup = new CapitalGainBreakupDTO();
                 breakup.setPurchaseTransactionId(purchase.getTransactionId());
                 breakup.setSaleTransactionId(sale.getTransactionId());
+
+                breakup.setClientCode(sale.getClientCode());
+                breakup.setSecurityCode(sale.getSecurityCode());
+                breakup.setClientName(sale.getClientName());
+                breakup.setSecurityName(sale.getSecurityName());
+                breakup.setIsin(sale.getIsin());
+                breakup.setListingStatus(sale.getListingStatus());
+                breakup.setPrdHoldingFlag(sale.getPrdHoldingFlag());
+                breakup.setCapitalGainType(gainType);
+
                 breakup.setPurchaseDate(purchase.getSettlementDate());
                 breakup.setSaleDate(sale.getSettlementDate());
-                breakup.setPurchaseRate(purchase.getRate().doubleValue());
-                breakup.setSaleRate(sale.getRate().doubleValue());
+                breakup.setClientName(sale.getClientName());
+                breakup.setSecurityName(sale.getSecurityName());
+                breakup.setIsin(sale.getIsin());
+                breakup.setListingStatus(sale.getListingStatus());
+                breakup.setPrdHoldingFlag(sale.getPrdHoldingFlag());
+                breakup.setCapitalGainType(gainType); // already set if you’ve handled holding period
+
+                breakup.setPurchasePrice(purchase.getRate().doubleValue());
+                breakup.setSalePrice(sale.getRate().doubleValue());
                 breakup.setQuantity(matchedQty);
                 breakup.setGainOrLoss(gain);
                 breakup.setHoldingPeriodDays((int) holdingDays);
+                breakup.setClientCode(sale.getClientCode());
+                breakup.setSecurityCode(sale.getSecurityCode());
+                breakup.setClientName(sale.getClientName());
+                breakup.setIsin(sale.getIsin());
+                breakup.setSecurityName(sale.getSecurityName());
+                breakup.setListingStatus(sale.getListingStatus());
+                breakup.setPrdHoldingFlag(sale.getPrdHoldingFlag());
+
                 //new added
                 breakup.setCapitalGainType(gainType);
-                breakup.setPurchasePrice(purchase.getRate() * matchedQty);
-                breakup.setSalePrice(sale.getRate() * matchedQty);
+                //breakup.setPurchasePrice(purchase.getRate() * matchedQty);
+                //breakup.setSalePrice(sale.getRate() * matchedQty);
                 breakup.setPurchaseValue(purchase.getRate() * matchedQty);
                 breakup.setSaleValue(sale.getRate() * matchedQty);
 

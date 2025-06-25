@@ -1,5 +1,6 @@
 package com.equity.transaction.service.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -19,17 +20,20 @@ public class CapitalGainBreakupDTO {
     private String securityCode;
     private Date purchaseDate;
     private Date saleDate;
-    private Double purchaseRate;
-    private Double saleRate;
+    @JsonProperty("purchasePrice")
+    private Double purchasePrice;
+    @JsonProperty("salePrice")
+    private Double salePrice;
+
     private Integer holdingPeriodDays;
     private String capitalGainType;
     private Double quantity;
     private int holdingPeriod;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
-    private Double purchasePrice;
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
-    private Double salePrice;
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
+//    private Double purchasePrice;
+//    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
+//    private Double salePrice;
+//    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
     private Double purchaseValue;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
     private Double saleValue;
@@ -39,5 +43,12 @@ public class CapitalGainBreakupDTO {
     private String saleTransactionId;
     private Double  balancePurchaseQty;
     private Double balanceSaleQty;
+    private String clientName;
+    private String securityName;
+    private String isin;
+    private String listingStatus;
+    private String prdHoldingFlag;
+
+
 
 }

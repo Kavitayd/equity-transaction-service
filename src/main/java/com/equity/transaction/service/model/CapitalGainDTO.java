@@ -22,12 +22,6 @@ public class CapitalGainDTO {
     private Date saleDate;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
     private Double totalCapitalGain;
-    private String prdHoldingFlag;
-    private String clientName;
-    private String securityName;
-    private String isin;
-    private String listingStatus;
-    private String capitalGainType;
     private String transactionId;
     private List<CapitalGainBreakupDTO> breakup;
 

@@ -5,9 +5,17 @@ import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.DateUtil;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Date;
+import java.time.LocalDate;
+import java.time.ZoneId;
+
+import static com.equity.transaction.service.service.util.ServiceUtil.*;
+
 import static com.equity.transaction.service.service.util.ServiceUtil.roundToTwoDecimalPlaces;
 
 import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ServiceUtil {
 
@@ -113,7 +121,7 @@ public class ServiceUtil {
                 return cell.getNumericCellValue();
             }
         } catch (NumberFormatException | IllegalStateException e) {
-            System.out.println("⚠️ Skipping cell (expected Double): " + e.getMessage());
+            System.out.println(" Skipping cell (expected Double): " + e.getMessage());
             return null;
         }
 
@@ -133,4 +141,24 @@ public class ServiceUtil {
                 .doubleValue();
     }
 
+    public static LocalDate convertToLocalDate(Date date) {
+        return date == null ? null : date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+    }
+
+
+    //*******
+    private static final Map<String, Integer> serialNumberMap = new HashMap<>();
+
+    public static String generateCustomTransactionId(Long clientCode, String eventType, String securityCode) {
+        String key = clientCode + "_" + eventType + "_" + securityCode;
+        int serial = serialNumberMap.getOrDefault(key, 0) + 1;
+        serialNumberMap.put(key, serial);
+
+        return key + "_" + serial;
+    }
+
+
 }
+
+
+//---------------------new try

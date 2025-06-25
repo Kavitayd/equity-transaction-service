@@ -39,5 +39,28 @@ public class TransactionDTO {
     private Double quantity;
     private Double rate;
     private Double amount;
+
+    private String isin;
+    private String securityName;
+    private String listingStatus;
+    private String prdHoldingFlag;
+
+    private String capitalGainType;
+    private Date purchaseDate;
+    private Date saleDate;
+    private String purchaseTransactionId;
+    private String saleTransactionId;
+    private Double purchaseRate;
+    private Double saleRate;
+    private Double purchaseValue;
+    private Double saleValue;
+    private Integer holdingPeriod;
+    private Double balancePurchaseQty;
+    private Double balanceSaleQty;
+    private String gainOrLoss;
+
+
+
+
 //    private Double  gainOrLoss;
 }
