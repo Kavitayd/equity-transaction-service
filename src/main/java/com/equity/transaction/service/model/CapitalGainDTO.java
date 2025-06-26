@@ -20,6 +20,10 @@ public class CapitalGainDTO {
     private Long clientCode;
     private String securityCode;
     private Date saleDate;
+    private String eventType;
+    private LocalDate tradeDate;
+    private LocalDate settlementDate;
+    private Double quantity;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
     private Double totalCapitalGain;
     private String transactionId;

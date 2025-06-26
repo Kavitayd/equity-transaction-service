@@ -1,5 +1,6 @@
 package com.equity.transaction.service.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,6 +19,7 @@ public class PositionDTO {
     @Id
     private String id = UUID.randomUUID().toString();
     private Long clientCode;
+    private LocalDate saleDate;
     private LocalDate date;
     private String securityCode;
     private Integer qty;

@@ -19,6 +19,10 @@ import java.util.Map;
 
 public class ServiceUtil {
 
+
+    /**
+     * Extracts the string value from a cell, handling different cell types.
+     */
     public static String getStringValue(Cell cell) {
         if (cell == null) return null;
 
@@ -42,6 +46,9 @@ public class ServiceUtil {
                 return cell.toString();
         }
     }
+    /**
+     * Extracts an Integer value from a cell, supporting numeric, string, and formula types.
+     */
     public static Integer getIntegerValue(Cell cell) {
         if (cell == null) return null;
 
@@ -82,6 +89,9 @@ public class ServiceUtil {
 //        return null;
 //    }
 
+    /**
+     * Extracts a Long value from a cell (used for large numeric IDs like clientCode).
+     */
     public static Long getLongValue(Cell cell) {
         if (cell == null) return null;
 
@@ -108,6 +118,9 @@ public class ServiceUtil {
         }
     }
 
+    /**
+     * Extracts a Double value from a cell. Returns null if invalid.
+     */
     public static Double getDoubleValue(Cell cell) {
         if (cell == null) return null;
 
@@ -128,18 +141,26 @@ public class ServiceUtil {
         return null;
     }
 
-
+    /**
+     * Returns a LocalDate from a date-formatted Excel cell.
+     */
     public static LocalDate getDateValue(Cell cell) {
         return cell != null && DateUtil.isCellDateFormatted(cell)
                 ? cell.getLocalDateTimeCellValue().toLocalDate()
                 : null;
     }
+    /**
+     * Rounds a double value to two decimal places using HALF_UP rounding mode.
+     */
 
     public static double roundToTwoDecimalPlaces(double value) {
         return BigDecimal.valueOf(value)
                 .setScale(2, RoundingMode.HALF_UP)
                 .doubleValue();
     }
+    /**
+     * Converts java.util.Date to java.time.LocalDate.
+     */
 
     public static LocalDate convertToLocalDate(Date date) {
         return date == null ? null : date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
@@ -149,6 +170,10 @@ public class ServiceUtil {
     //*******
     private static final Map<String, Integer> serialNumberMap = new HashMap<>();
 
+    /**
+     * Generates a unique transaction ID in the format:
+     * <clientCode>_<eventType>_<securityCode>_<serialNumber>
+     */
     public static String generateCustomTransactionId(Long clientCode, String eventType, String securityCode) {
         String key = clientCode + "_" + eventType + "_" + securityCode;
         int serial = serialNumberMap.getOrDefault(key, 0) + 1;
@@ -160,5 +185,3 @@ public class ServiceUtil {
 
 }
 
-
-//---------------------new try
