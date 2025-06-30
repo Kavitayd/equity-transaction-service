@@ -5,6 +5,8 @@ import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.DateUtil;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Date;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -145,10 +147,22 @@ public class ServiceUtil {
      * Returns a LocalDate from a date-formatted Excel cell.
      */
     public static LocalDate getDateValue(Cell cell) {
-        return cell != null && DateUtil.isCellDateFormatted(cell)
-                ? cell.getLocalDateTimeCellValue().toLocalDate()
-                : null;
+        if (cell == null) return null;
+        if (cell.getCellType() == CellType.NUMERIC && DateUtil.isCellDateFormatted(cell)) {
+            return cell.getDateCellValue().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        }
+        if (cell.getCellType() == CellType.STRING) {
+            String value = cell.getStringCellValue().trim();
+            try {
+                return LocalDate.parse(value); // Assuming ISO date (yyyy-MM-dd)
+            } catch (DateTimeParseException e) {
+                System.out.println("⚠️ Invalid date string: " + value);
+            }
+        }
+        return null;
     }
+
+
     /**
      * Rounds a double value to two decimal places using HALF_UP rounding mode.
      */

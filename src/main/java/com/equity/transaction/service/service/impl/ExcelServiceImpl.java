@@ -16,7 +16,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -56,9 +58,24 @@ public class ExcelServiceImpl implements ExcelService {
     private static final int COL_LISTING_STATUS = 22;
     private static final int COL_PRD_HOLDING_FLAG = 23;
 
-    private boolean isHeaderRow(Row row) {
-        Cell firstCell = row.getCell(COL_CLIENT_CODE);
-        return firstCell != null && firstCell.getCellType() == CellType.STRING && firstCell.getStringCellValue().trim().equalsIgnoreCase("Client Code");
+    // Sheet-specific header checks
+    private boolean isTransactionHeader(Row row) {
+        Cell cell = row.getCell(COL_CLIENT_CODE);
+        return cell != null && cell.getCellType() == CellType.STRING &&
+                cell.getStringCellValue().trim().equalsIgnoreCase("Client Code");
+    }
+
+    private boolean isPositionHeader(Row row) {
+        Cell cell = row.getCell(0);
+        return cell != null && cell.getCellType() == CellType.STRING &&
+                cell.getStringCellValue().trim().equalsIgnoreCase("Client Code");
+    }
+
+
+    private boolean isMarketPriceHeader(Row row) {
+        Cell cell = row.getCell(0);
+        return cell != null && cell.getCellType() == CellType.STRING &&
+                cell.getStringCellValue().trim().equalsIgnoreCase("Security Code");
     }
 
     @Override
@@ -66,20 +83,23 @@ public class ExcelServiceImpl implements ExcelService {
         List<TransactionDTO> transactions = new ArrayList<>();
         try (Workbook workbook = new XSSFWorkbook(file.getInputStream())) {
             Sheet sheet = workbook.getSheetAt(0);
-            for (Row row : sheet) {
-                if (row.getRowNum() == 0 || isHeaderRow(row)) continue;
+            System.out.println("Reading Sheet: " + sheet.getSheetName());
 
+            for (Row row : sheet) {
+                if (row.getRowNum() == 0 || isTransactionHeader(row)) continue;
                 try {
                     TransactionDTO dto = new TransactionDTO();
                     dto.setClientCode(getLongValue(row.getCell(COL_CLIENT_CODE)));
                     dto.setClientName(getStringValue(row.getCell(COL_CLIENT_NAME)));
                     dto.setEventType(getStringValue(row.getCell(COL_EVENT_TYPE)));
+
                     LocalDate tradeDate = getDateValue(row.getCell(COL_TRADE_DATE));
                     LocalDate settlementDate = getDateValue(row.getCell(COL_SETTLEMENT_DATE));
-                    dto.setTradeDate(tradeDate != null ? java.sql.Date.valueOf(tradeDate) : null);
-                    dto.setSettlementDate(settlementDate != null ? java.sql.Date.valueOf(settlementDate) : null);
-                    dto.setSecurityCode(getStringValue(row.getCell(COL_SECURITY_CODE)));
+                    dto.setTradeDate(Date.from(tradeDate.atStartOfDay(ZoneId.systemDefault()).toInstant()));
+                    dto.setSettlementDate(Date.from(settlementDate.atStartOfDay(ZoneId.systemDefault()).toInstant()));
+
                     Double quantity = getDoubleValue(row.getCell(COL_QUANTITY));
+                    dto.setSecurityCode(getStringValue(row.getCell(COL_SECURITY_CODE)));
                     dto.setQuantity(quantity);
                     dto.setRate(getDoubleValue(row.getCell(COL_RATE)));
                     dto.setStampDuty(getIntegerValue(row.getCell(COL_STAMP_DUTY)));
@@ -94,13 +114,16 @@ public class ExcelServiceImpl implements ExcelService {
                     dto.setPrdFlag(getStringValue(row.getCell(COL_PRD_FLAG)));
                     dto.setGainLoss(getStringValue(row.getCell(COL_GAIN_LOSS)));
                     dto.setIsin(getStringValue(row.getCell(COL_ISIN)));
+
                     String secName = getStringValue(row.getCell(COL_SECURITY_NAME));
                     dto.setSecurityName((secName != null && !secName.matches("\\d+")) ? secName : null);
                     dto.setListingStatus(getStringValue(row.getCell(COL_LISTING_STATUS)));
                     dto.setPrdHoldingFlag(getStringValue(row.getCell(COL_PRD_HOLDING_FLAG)));
+
                     dto.setAvailableBuyQuantity(quantity != null ? quantity : 0.0);
                     dto.setAvailableSaleQuantity(quantity != null ? quantity : 0.0);
                     dto.setTransactionId(ServiceUtil.generateCustomTransactionId(dto.getClientCode(), dto.getEventType(), dto.getSecurityCode()));
+
                     transactions.add(dto);
                 } catch (Exception ex) {
                     System.out.printf("Row %d: Error processing row - %s%n", row.getRowNum(), ex.getMessage());
@@ -116,22 +139,34 @@ public class ExcelServiceImpl implements ExcelService {
     public List<PositionDTO> readPositionSheet(MultipartFile file) {
         List<PositionDTO> positions = new ArrayList<>();
         try (Workbook workbook = new XSSFWorkbook(file.getInputStream())) {
-            Sheet sheet = workbook.getSheetAt(1);
+              Sheet sheet = workbook.getSheetAt(1);
+            //Sheet sheet = workbook.getSheet("Sheet1");
+            System.out.println("Reading Sheet: " + sheet.getSheetName());
+
+            for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
+                System.out.println("Sheet[" + i + "] = " + workbook.getSheetName(i));
+            }
+
             for (Row row : sheet) {
-                if (row.getRowNum() == 0 || isHeaderRow(row)) continue;
+                if (row.getRowNum() == 0 || isPositionHeader(row)) continue;
                 try {
                     PositionDTO dto = new PositionDTO();
-                    dto.setClientCode(getLongValue(row.getCell(0)));
-                    dto.setDate(getDateValue(row.getCell(1)));
-                    dto.setSecurityCode(getStringValue(row.getCell(2)));
-                    dto.setQty(getIntegerValue(row.getCell(3)));
-                    dto.setHoldingCost(getDoubleValue(row.getCell(4)));
-                    dto.setAverageCostPerUnit(getDoubleValue(row.getCell(5)));
-                    dto.setCorpActionQty(getIntegerValue(row.getCell(6)));
-                    dto.setMarketPricePerUnitOnToday(getDoubleValue(row.getCell(7)));
-                    dto.setMarketValueOnToday(getDoubleValue(row.getCell(8)));
-                    dto.setCumulativeUnrealisedGainLossUptoToday(getDoubleValue(row.getCell(9)));
+                    dto.setClientCode(getLongValue(row.getCell(0)));                         // A
+                    dto.setDate(getDateValue(row.getCell(1)));                               // B
+                    dto.setSecurityCode(getStringValue(row.getCell(2)));                     // C
+                    dto.setQty(getIntegerValue(row.getCell(3)));                             // D
+                    dto.setHoldingCost(getDoubleValue(row.getCell(4)));                      // E
+                    dto.setAverageCostPerUnit(getDoubleValue(row.getCell(5)));              // F
+                    dto.setMarketPricePerUnitOnToday(getDoubleValue(row.getCell(6)));       // G
+                    dto.setMarketValueOnToday(getDoubleValue(row.getCell(7)));              // H
+                    dto.setCumulativeUnrealisedGainLossUptoToday(getDoubleValue(row.getCell(8)));  // I
+                    dto.setMarketPricePerUnitT1day(getDoubleValue(row.getCell(9)));         // J
+                    dto.setUnrealisedGainLossForToday(getDoubleValue(row.getCell(10)));
+                    //dto.setCorpActionQty(getDoubleValue(row.getCell(11))); // if field exists in DTO
+
+// Skipping column 11 (CorpActionQty) for now unless needed
                     positions.add(dto);
+
                 } catch (Exception ex) {
                     System.out.printf("Row %d: Error processing Position row - %s%n", row.getRowNum(), ex.getMessage());
                 }
@@ -147,8 +182,10 @@ public class ExcelServiceImpl implements ExcelService {
         List<MarketPriceDTO> prices = new ArrayList<>();
         try (Workbook workbook = new XSSFWorkbook(file.getInputStream())) {
             Sheet sheet = workbook.getSheetAt(2);
+            System.out.println("Reading Sheet: " + sheet.getSheetName());
+
             for (Row row : sheet) {
-                if (row.getRowNum() == 0 || isHeaderRow(row)) continue;
+                if (row.getRowNum() == 0 || isMarketPriceHeader(row)) continue;
                 try {
                     MarketPriceDTO dto = new MarketPriceDTO();
                     dto.setSecurityCode(getStringValue(row.getCell(0)));
@@ -219,10 +256,11 @@ public class ExcelServiceImpl implements ExcelService {
         dto.setQty(entity.getQty());
         dto.setHoldingCost(entity.getHoldingCost());
         dto.setAverageCostPerUnit(entity.getAverageCostPerUnit());
-        dto.setCorpActionQty(entity.getCorpActionQty());
         dto.setMarketPricePerUnitOnToday(entity.getMarketPricePerUnitOnToday());
         dto.setMarketValueOnToday(entity.getMarketValueOnToday());
         dto.setCumulativeUnrealisedGainLossUptoToday(entity.getCumulativeUnrealisedGainLossUptoToday());
+        dto.setUnrealisedGainLossForToday(entity.getUnrealisedGainLossForToday()); // ✅ Added missing field
+        dto.setMarketPricePerUnitT1day(entity.getMarketPricePerUnitT1day());
         return dto;
     }
 

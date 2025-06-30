@@ -18,18 +18,27 @@ import java.util.UUID;
 public class PositionDTO {
     @Id
     private String id = UUID.randomUUID().toString();
+
     private Long clientCode;
-    private LocalDate saleDate;
+
+    @JsonFormat(pattern = "dd-MM-yyyy")
     private LocalDate date;
+
     private String securityCode;
+
     private Integer qty;
+
     private Double holdingCost;
-    private Double averageCostPerUnit;
-    private Integer corpActionQty;
+
     private Double marketPricePerUnitOnToday;
+
     private Double marketValueOnToday;
+
     private Double cumulativeUnrealisedGainLossUptoToday;
 
+    private Double unrealisedGainLossForToday;
 
+    private Double marketPricePerUnitT1day;
 
+    private Double averageCostPerUnit;
 }
